@@ -1,7 +1,7 @@
 # Webpacker
 
-![travis-ci status](https://api.travis-ci.org/rails/webpacker.svg?branch=master)
-[![node.js](https://img.shields.io/badge/node-%3E%3D%206.14.0-brightgreen.svg)](https://nodejs.org/en/)
+[![Build Status](https://travis-ci.org/rails/webpacker.svg?branch=master)](https://travis-ci.org/rails/webpacker)
+[![node.js](https://img.shields.io/badge/node-%3E%3D%208.16.0-brightgreen.svg)](https://nodejs.org/en/)
 [![Gem](https://img.shields.io/gem/v/webpacker.svg)](https://github.com/rails/webpacker)
 
 Webpacker makes it easy to use the JavaScript pre-processor and bundler
@@ -34,7 +34,8 @@ in which case you may not even need the asset pipeline. This is mostly relevant 
   - [Vue](#vue)
   - [Elm](#elm)
   - [Stimulus](#stimulus)
-  - [Coffeescript](#coffeescript)
+  - [Svelte](#svelte)
+  - [CoffeeScript](#coffeescript)
   - [Erb](#erb)
 - [Paths](#paths)
   - [Resolved](#resolved)
@@ -51,7 +52,7 @@ in which case you may not even need the asset pipeline. This is mostly relevant 
 
 * Ruby 2.2+
 * Rails 4.2+
-* Node.js 6.14.4+
+* Node.js 8.16.0+
 * Yarn 1.x+
 
 
@@ -292,7 +293,7 @@ rails webpacker:binstubs
 yarn upgrade @rails/webpacker --latest
 yarn upgrade webpack-dev-server --latest
 
-# Or to install a latest release (including pre-releases)
+# Or to install the latest release (including pre-releases)
 yarn add @rails/webpacker@next
 ```
 
@@ -331,7 +332,7 @@ new Rails 5.1+ app using `--webpack=react` option:
 rails new myapp --webpack=react
 ```
 
-(or run `bundle exec rails webpacker:install:react` in a existing Rails app already
+(or run `bundle exec rails webpacker:install:react` in an existing Rails app already
 setup with Webpacker).
 
 The installer will add all relevant dependencies using Yarn, changes
@@ -407,6 +408,72 @@ end
 ```
 You can read more about this in the [Vue docs](https://vuejs.org/v2/guide/installation.html#CSP-environments).
 
+#### Lazy loading integration
+
+See [docs/es6](docs/es6.md) to know more about Webpack and Webpacker configuration.
+
+For instance, you can lazy load Vue JS components:
+
+Before:
+```js
+import Vue from 'vue'
+import { VCard } from 'vuetify/lib'
+
+Vue.component('VCard', VCard)
+```
+
+After:
+```js
+import Vue from 'vue'
+
+// With destructuring assignment
+Vue.component('VCard', import('vuetify/lib').then(({ VCard }) => VCard)
+
+// Or without destructuring assignment
+Vue.component('OtherComponent', () => import('./OtherComponent'))
+```
+
+You can use it in a Single File Component as well:
+
+```html
+<template>
+  ...
+</template>
+
+<script>
+export default {
+  components: {
+    OtherComponent: () => import('./OtherComponent')
+  }
+}
+</script>
+```
+
+By wrapping the import function into an arrow function, Vue will execute it only when it gets requested, loading the module in that moment.
+
+##### Automatic registration
+
+```js
+/**
+ * The following block of code may be used to automatically register your
+ * Vue components. It will recursively scan this directory for the Vue
+ * components and automatically register them with their "basename".
+ *
+ * Eg. ./components/OtherComponent.vue -> <other-component></other-component>
+ * Eg. ./UI/ButtonComponent.vue -> <button-component></button-component>
+ */
+
+const files = require.context('./', true, /\.vue$/i)
+files.keys().map(key => {
+  const component = key.split('/').pop().split('.')[0]
+
+  // With Lazy Loading
+  Vue.component(component, () => import(`${key}`))
+
+  // Or without Lazy Loading
+  Vue.component(component, files(key).default)
+})
+```
 
 ### Elm
 
@@ -424,6 +491,20 @@ The Elm library and its core packages will be added via Yarn and Elm.
 An example `Main.elm` app will also be added to your project in `app/javascript`
 so that you can experiment with Elm right away.
 
+### Svelte
+
+To use Webpacker with [Svelte](https://svelte.dev), create a
+new Rails 5.1+ app using `--webpack=svelte` option:
+
+```
+# Rails 5.1+
+rails new myapp --webpack=svelte
+```
+
+(or run `bundle exec rails webpacker:install:svelte` on a Rails app already setup with Webpacker).
+
+Please play with the [Svelte Tutorial](https://svelte.dev/tutorial/basics) or learn more about its API at https://svelte.dev/docs
+
 ### Stimulus
 
 To use Webpacker with [Stimulus](http://stimulusjs.org), create a
@@ -438,14 +519,14 @@ rails new myapp --webpack=stimulus
 
 Please read [The Stimulus Handbook](https://stimulusjs.org/handbook/introduction) or learn more about its source code at https://github.com/stimulusjs/stimulus
 
-### Coffeescript
+### CoffeeScript
 
-To add [Coffeescript](http://coffeescript.org/) support,
+To add [CoffeeScript](http://coffeescript.org/) support,
 run `bundle exec rails webpacker:install:coffee` on a Rails app already
 setup with Webpacker.
 
 An example `hello_coffee.coffee` file will also be added to your project
-in `app/javascript/packs` so that you can experiment with Coffeescript right away.
+in `app/javascript/packs` so that you can experiment with CoffeeScript right away.
 
 ### Erb
 
@@ -539,7 +620,25 @@ Webpacker hooks up a new `webpacker:compile` task to `assets:precompile`, which 
 
 ## Docs
 
-You can find more detailed guides under [docs](./docs).
+- [Development](https://github.com/rails/webpacker#development)
+  - [Webpack](./docs/webpack.md)
+  - [Webpack-dev-server](./docs/webpack-dev-server.md)
+  - [Environment Variables](./docs/env.md)
+  - [Folder Structure](./docs/folder-structure.md)
+  - [Assets](./docs/assets.md)
+	  - [CSS, Sass and SCSS](./docs/css.md)
+	  - [ES6](./docs/es6.md)
+    - [Props](./docs/props.md)
+    - [Typescript](./docs/typescript.md)
+  - [Yarn](./docs/yarn.md)
+  - [Misc](./docs/misc.md)
+- [Deployment](./docs/deployment.md)
+  - [Docker](./docs/docker.md)
+  - [Using in Rails engines](./docs/engines.md)
+  - [Webpacker on Cloud9](./docs/cloud9.md)
+- [Testing](./docs/testing.md)
+- [Troubleshooting](./docs/troubleshooting.md)
+- [v3 to v4 Upgrade Guide](./docs/v4-upgrade.md)
 
 
 ## Contributing

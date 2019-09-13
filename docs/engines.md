@@ -9,7 +9,7 @@ This guide describes how to do that using [Rails engines](https://guides.rubyonr
 
 ## Step 1: create Rails engine.
 
-First, you create a Rails engine (say, `MyEngine`). See the offical [Rails guide](https://guides.rubyonrails.org/engines.html).
+First, you create a Rails engine (say, `MyEngine`). See the official [Rails guide](https://guides.rubyonrails.org/engines.html).
 
 ## Step 2: install Webpacker within the engine.
 
@@ -20,6 +20,8 @@ There is no built-in tasks to install Webpacker within the engine, thus you have
 
 
 ## Step 3: configure Webpacker instance.
+
+- File `lib/my_engine.rb`
 
 ```ruby
 module MyEngine
@@ -37,6 +39,8 @@ end
 ```
 
 ## Step 4: Configure dev server proxy.
+
+- File `lib/my_engine/engine.rb`
 
 ```ruby
 module MyEngine
@@ -73,6 +77,8 @@ development:
 
 ## Step 5: configure helper.
 
+- File `app/helpers/my_engine/application_helper.rb`
+
 ```ruby
 require "webpacker/helper"
 
@@ -92,6 +98,8 @@ Now you can use `stylesheet_pack_tag` and `javascript_pack_tag` from within your
 ## Step 6: rake tasks.
 
 Add Rake task to compile assets in production (`rake my_engine:webpacker:compile`)
+
+- File `lib/tasks/my_engine_tasks.rake`
 
 ```ruby
 namespace :my_engine do
@@ -147,7 +155,7 @@ To serve static assets from the engine's `public/` folder you must add a middlew
 # application.rb
 
 config.middleware.use(
-  "Rack::Static",
+  Rack::Static,
   urls: ["/my-engine-packs"], root: "my_engine/public"
 )
 ```

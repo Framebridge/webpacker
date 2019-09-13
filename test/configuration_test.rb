@@ -14,9 +14,19 @@ class ConfigurationTest < Webpacker::Test
     assert_equal source_path, @config.source_path.to_s
   end
 
+  def test_source_path_globbed
+    assert_equal @config.source_path_globbed,
+                 "app/javascript/**/*{.mjs,.js,.sass,.scss,.css,.module.sass,.module.scss,.module.css,.png,.svg,.gif,.jpeg,.jpg}"
+  end
+
   def test_source_entry_path
     source_entry_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/app/javascript", "packs").to_s
     assert_equal @config.source_entry_path.to_s, source_entry_path
+  end
+
+  def test_public_root_path
+    public_root_path = File.expand_path File.join(File.dirname(__FILE__), "test_app/public").to_s
+    assert_equal @config.public_path.to_s, public_root_path
   end
 
   def test_public_output_path
@@ -48,7 +58,10 @@ class ConfigurationTest < Webpacker::Test
   end
 
   def test_resolved_paths_globbed
-    assert_equal @config.resolved_paths_globbed, ["app/assets/**/*", "/etc/yarn/**/*"]
+    assert_equal @config.resolved_paths_globbed, [
+      "app/assets/**/*{.mjs,.js,.sass,.scss,.css,.module.sass,.module.scss,.module.css,.png,.svg,.gif,.jpeg,.jpg}",
+      "/etc/yarn/**/*{.mjs,.js,.sass,.scss,.css,.module.sass,.module.scss,.module.css,.png,.svg,.gif,.jpeg,.jpg}"
+    ]
   end
 
   def test_extensions
@@ -60,40 +73,36 @@ class ConfigurationTest < Webpacker::Test
   def test_cache_manifest?
     assert @config.cache_manifest?
 
-    @config = Webpacker::Configuration.new(
-      root_path: @config.root_path,
-      config_path: @config.config_path,
-      env: "development"
-    )
+    with_rails_env("development") do
+      refute Webpacker.config.cache_manifest?
+    end
 
-    refute @config.cache_manifest?
-
-    @config = Webpacker::Configuration.new(
-      root_path: @config.root_path,
-      config_path: @config.config_path,
-      env: "test"
-    )
-
-    refute @config.cache_manifest?
+    with_rails_env("test") do
+      refute Webpacker.config.cache_manifest?
+    end
   end
 
   def test_compile?
     refute @config.compile?
 
-    @config = Webpacker::Configuration.new(
-      root_path: @config.root_path,
-      config_path: @config.config_path,
-      env: "development"
-    )
+    with_rails_env("development") do
+      assert Webpacker.config.compile?
+    end
 
-    assert @config.compile?
+    with_rails_env("test") do
+      assert Webpacker.config.compile?
+    end
+  end
 
-    @config = Webpacker::Configuration.new(
-      root_path: @config.root_path,
-      config_path: @config.config_path,
-      env: "test"
-    )
+  def test_extract_css?
+    assert @config.extract_css?
 
-    assert @config.compile?
+    with_rails_env("development") do
+      refute Webpacker.config.extract_css?
+    end
+
+    with_rails_env("test") do
+      refute Webpacker.config.extract_css?
+    end
   end
 end

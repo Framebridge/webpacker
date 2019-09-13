@@ -19,9 +19,15 @@ class Webpacker::Compiler
   def compile
     if stale?
       run_webpack.tap do |success|
-        record_compilation_digest if success
+        # We used to only record the digest on success
+        # However, the output file is still written on error, (at least with ts-loader), meaning that the
+        # digest should still be updated. If it's not, you can end up in a situation where a recompile doesn't
+        # take place when it should.
+        # See https://github.com/rails/webpacker/issues/2113
+        record_compilation_digest
       end
     else
+      logger.info "Everything's up-to-date. Nothing to do"
       true
     end
   end
@@ -56,7 +62,7 @@ class Webpacker::Compiler
     end
 
     def run_webpack
-      logger.info "Compiling…"
+      logger.info "Compiling..."
 
       stdout, stderr, status = Open3.capture3(
         webpack_env,
@@ -67,12 +73,13 @@ class Webpacker::Compiler
       if status.success?
         logger.info "Compiled all packs in #{config.public_output_path}"
         logger.error "#{stderr}" unless stderr.empty?
-      else
-        logger.error "Compilation failed:\n#{stderr}"
-      end
 
-      if config.webpack_compile_output?
-        logger.info stdout
+        if config.webpack_compile_output?
+          logger.info stdout
+        end
+      else
+        non_empty_streams = [stdout, stderr].delete_if(&:empty?)
+        logger.error "Compilation failed:\n#{non_empty_streams.join("\n\n")}"
       end
 
       status.success?
@@ -81,7 +88,7 @@ class Webpacker::Compiler
     def default_watched_paths
       [
         *config.resolved_paths_globbed,
-        "#{config.source_path.relative_path_from(config.root_path)}/**/*",
+        config.source_path_globbed,
         "yarn.lock", "package.json",
         "config/webpack/**/*"
       ].freeze

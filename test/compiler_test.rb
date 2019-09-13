@@ -25,9 +25,9 @@ class CompilerTest < Minitest::Test
 
   def test_default_watched_paths
     assert_equal Webpacker.compiler.send(:default_watched_paths), [
-      "app/assets/**/*",
-      "/etc/yarn/**/*",
-      "app/javascript/**/*",
+      "app/assets/**/*{.mjs,.js,.sass,.scss,.css,.module.sass,.module.scss,.module.css,.png,.svg,.gif,.jpeg,.jpg}",
+      "/etc/yarn/**/*{.mjs,.js,.sass,.scss,.css,.module.sass,.module.scss,.module.css,.png,.svg,.gif,.jpeg,.jpg}",
+      "app/javascript/**/*{.mjs,.js,.sass,.scss,.css,.module.sass,.module.scss,.module.css,.png,.svg,.gif,.jpeg,.jpg}",
       "yarn.lock",
       "package.json",
       "config/webpack/**/*"
@@ -49,14 +49,13 @@ class CompilerTest < Minitest::Test
     end
   end
 
-  def test_staleness_on_compile_fail
+  def test_freshness_on_compile_fail
     status = OpenStruct.new(success?: false)
 
     assert Webpacker.compiler.stale?
     Open3.stub :capture3, [:sterr, :stdout, status] do
-
       Webpacker.compiler.compile
-      assert Webpacker.compiler.stale?
+      assert Webpacker.compiler.fresh?
     end
   end
 
