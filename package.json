@@ -44,7 +44,8 @@
     "webpack": "^4.44.1",
     "webpack-assets-manifest": "^3.1.1",
     "webpack-cli": "^3.3.12",
-    "webpack-sources": "^1.4.3"
+    "webpack-sources": "^1.4.3",
+    "@snyk/protect": "latest"
   },
   "devDependencies": {
     "eslint": "^7.6.0",
@@ -62,7 +63,9 @@
   },
   "scripts": {
     "test": "jest",
-    "lint": "eslint package/"
+    "lint": "eslint package/",
+    "prepare": "yarn run snyk-protect",
+    "snyk-protect": "snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -73,5 +76,6 @@
   "bugs": {
     "url": "https://github.com/rails/webpacker/issues"
   },
-  "homepage": "https://github.com/rails/webpacker"
+  "homepage": "https://github.com/rails/webpacker",
+  "snyk": true
 }
